@@ -1,0 +1,8 @@
+conda create --name tf_gpu tensorflow-gpu 
+
+conda activate tf_gpu
+
+conda install cudatoolkit
+
+conda install cudnn
+
