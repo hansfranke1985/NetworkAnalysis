@@ -1,0 +1,94 @@
+friend_count,group,mutual_friend_count,na,NewLabel,relationship_status,sex,vertex.names,NodeID
+73,Family,37,FALSE,NA,Married,female,SE,1
+53,GraduateSchool,3,FALSE,NA,Married,male,PH,2
+363,GraduateSchool,3,FALSE,NA,Married,female,PD,3
+64,GraduateSchool,4,FALSE,NA,,female,LN,4
+19,Family,10,FALSE,NA,,female,MB,5
+99,College,1,FALSE,NA,In a Relationship,female,AP,6
+432,College,1,FALSE,NA,In a Relationship,male,SM,7
+22,Work,3,FALSE,NA,,female,CB,8
+153,Work,9,FALSE,NA,,male,TB2,9
+63,Work,6,FALSE,NA,,male,RBW,10
+298,Work,12,FALSE,NA,Married,female,NW,11
+834,Family,26,FALSE,NA,Single,female,AL,12
+143,Music,3,FALSE,NA,,male,DB,13
+128,Music,4,FALSE,NA,,female,CWB,14
+143,Music,8,FALSE,NA,,male,BS,15
+363,Music,13,FALSE,NA,,female,AC,16
+373,Music,6,FALSE,NA,,female,BW,17
+79,Music,3,FALSE,NA,Married,male,DZM,18
+42,Music,5,FALSE,NA,,male,KW,19
+83,Work,3,FALSE,NA,,female,VST,20
+,Work,12,FALSE,NA,,male,TM,21
+604,Family,6,FALSE,NA,Single,male,CR,22
+508,Family,23,FALSE,NA,Single,male,AAE,23
+307,Family,6,FALSE,NA,Married,female,HRS,24
+67,Family,7,FALSE,NA,,female,LRS,25
+31,Family,19,FALSE,NA,,female,SL,26
+236,College,2,FALSE,NA,,male,JJ,27
+250,College,2,FALSE,NA,Married,male,TBC,28
+191,College,2,FALSE,NA,,female,LE,29
+405,Family,19,FALSE,NA,Married,female,BCL,30
+271,Family,21,FALSE,NA,Married,female,SLL,31
+80,GraduateSchool,1,FALSE,NA,,male,TNB,32
+176,GraduateSchool,3,FALSE,NA,Single,female,MGE,33
+97,GraduateSchool,4,FALSE,NA,Married,female,JLG,34
+62,GraduateSchool,2,FALSE,NA,Married,male,DGT,35
+63,Work,6,FALSE,NA,Married,female,DK,36
+110,Work,6,FALSE,NA,Married,male,WT,37
+122,Work,7,FALSE,NA,Married,male,DSW,38
+115,Work,10,FALSE,NA,Married,male,ME,39
+1316,Music,5,FALSE,NA,In a Relationship,male,MWB,40
+224,Music,5,FALSE,NA,,female,BD,41
+461,Music,4,FALSE,NA,In a Relationship,female,LL,42
+95,Music,6,FALSE,NA,,male,BB,43
+390,Music,7,FALSE,NA,Married,female,LSM,44
+283,Music,7,FALSE,NA,,female,KM,45
+201,Spiel,5,FALSE,NA,Married,male,SP,46
+199,Spiel,5,FALSE,NA,Married,female,LCP,47
+217,Spiel,5,FALSE,NA,Married,male,ADE,48
+271,Spiel,5,FALSE,NA,,male,KH,49
+304,Spiel,5,FALSE,NA,,female,ECS,50
+322,Spiel,5,FALSE,NA,,male,KT,51
+502,HighSchool,4,FALSE,NA,Married,female,GB,52
+65,HighSchool,1,FALSE,NA,,female,RBH,53
+15,HighSchool,1,FALSE,NA,,male,JU,54
+97,HighSchool,2,FALSE,NA,Married,female,JZ,55
+,Music,2,FALSE,NA,Married,male,DSM,56
+123,Family,16,FALSE,NA,Married,male,BL,57
+230,Family,14,FALSE,NA,,female,CG,58
+231,Family,11,FALSE,NA,In a Relationship,female,CSH,59
+282,Family,17,FALSE,NA,Married,female,GGA,60
+491,Family,16,FALSE,NA,In a Relationship,male,ADL,61
+141,Family,18,FALSE,NA,Married,male,DL,62
+278,Family,13,FALSE,NA,,female,LBF,63
+302,Family,18,FALSE,NA,In a Relationship,male,GL,64
+78,Family,9,FALSE,NA,,female,CS,65
+100,Family,14,FALSE,NA,Married,female,DSF,66
+575,Family,16,FALSE,NA,,male,ALL,67
+196,BookClub,6,FALSE,NA,Married,female,CW1,68
+51,BookClub,6,FALSE,NA,,male,DZB,69
+60,BookClub,6,FALSE,NA,,male,PW,70
+131,BookClub,6,FALSE,NA,,female,ARL,71
+109,BookClub,6,FALSE,NA,,female,LZ,72
+,Music,4,FALSE,NA,,female,MBM,73
+199,Work,8,FALSE,NA,Married,male,RW,74
+,Work,2,FALSE,NA,Married,female,ECW,75
+135,Work,12,FALSE,NA,Married,female,JK,76
+746,Work,2,FALSE,NA,Married,female,ASS,77
+492,Work,3,FALSE,NA,,female,SS1,78
+130,Work,9,FALSE,NA,Married,female,SMH,79
+171,Work,9,FALSE,NA,,male,TB1,80
+303,Work,4,FALSE,NA,,male,DM,81
+107,Work,2,FALSE,NA,,female,LBW,82
+1188,Work,5,FALSE,NA,,male,MD,83
+171,GraduateSchool,3,FALSE,NA,Married,male,TR,84
+66,GraduateSchool,2,FALSE,NA,Married,female,DSG,85
+113,GraduateSchool,3,FALSE,NA,Married,female,LRG,86
+425,Work,2,FALSE,NA,,female,SS2,87
+700,Music,5,FALSE,NA,In a Relationship,female,JLT,88
+553,Family,15,FALSE,NA,In a Relationship,male,LSF,89
+209,Family,7,FALSE,NA,Married,female,TSL,90
+150,College,0,FALSE,NA,,female,LBC,91
+175,College,0,FALSE,NA,Married,female,LLB,92
+134,HighSchool,0,FALSE,NA,Married,female,DW,93

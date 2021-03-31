@@ -1,0 +1,1413 @@
+<<<<<<< Updated upstream
+---
+title: "Group Lab assignment 2 - Social network analysis and modelling "
+author: "Hans, Jimmy, Lena and Gianis"
+mainfont: Arial
+fontsize: 12pt
+urlcolor: blue
+output:
+  html_document:
+    highlight: default
+    theme: paper
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
+    toc_depth: '5'
+params:
+  rcode: true
+  answers: true
+---
+
+
+## import packages
+```{r, echo=FALSE}
+library(igraph)
+library(network)
+library(intergraph)
+library(RColorBrewer)
+```
+
+# Exercise 1 Build and analyse a small network from Facebook
+
+```{r}
+nodes <- read.csv("Facebook_att.csv", header = TRUE)
+links <- read.csv("Facebook_edge.csv", header = TRUE)
+facebook <- graph_from_data_frame(d = links, vertices = nodes$NodeID, directed = FALSE)
+facebook_net <- asNetwork(facebook)
+
+```
+
+```{r}
+# Load in other attributes.
+facebook_net %v% "vertex.names"        <- nodes$vertex.names
+facebook_net %v% "sex"                 <- nodes$sex
+facebook_net %v% "friend_count"        <- nodes$friend_count
+facebook_net %v% "group"               <- nodes$group
+facebook_net %v% "mutual_friend_count" <- nodes$mutual_friend_count
+facebook_net %v% "na"                  <- nodes$na
+facebook_net %v% "relationship_status" <- nodes$relationship_status
+```
+
+
+```{r}
+summary(facebook_net)
+```
+
+
+```{r}
+plot(facebook_net, vertex.cex = 1.2, main = "Basic plot of Douglas’s Facebook friends")
+```
+
+### Question 1, 2 points
+
+Check out the Summary and Plot, how many friends do Douglas have on Facebook? Is this a directed or undirected graph and why? What is the meaning of the link between nodes in the plot? 
+
+**Answer**
+As one can see in the summary, Douglas has 93 friends on Facebook. THe graph shows undirected connections between the nodes as one only sees who is friends with who but not for instance if they are following each other in the network or if the attention/focus is directed in one direction. 
+The link in nodes means a friendship connection on facebook between the two nodes. 
+
+ mutual_friend_count:
+  integer valued attribute
+  93 values
+
+# Measure node-level metrics
+
+First we'll investiage on Dougla's friends on an individual level. Looking at friend number 1  (v=1) and that friends role in the network. 
+
+```{r}
+degree(facebook, v=1, mode = "total")
+plot(facebook_net, vertex.cex = 1.2, main = "Role of friend   v=1 in Douglas'network")
+closeness(facebook, v = 1, normalized = TRUE)
+betweenness(facebook, v = 1, directed = FALSE, normalized = TRUE) 
+eigen_centrality(facebook)$vector[1]
+transitivity(facebook, type = "localundirected", vids = 1)
+```
+Error message as some graphs are disconnected which means that closeness centrality cannot be calculated correctly as they cannot be reached from specific other nodes. 
+
+```{r}
+degree(facebook, v=2, mode = "total")
+plot(facebook_net, vertex.cex = 1.2, main = "Role of friend   v=2 in Douglas'network")
+closeness(facebook, v = 2, normalized = TRUE)
+betweenness(facebook, v = 2, directed = FALSE, normalized = TRUE) 
+eigen_centrality(facebook)$vector[2]
+transitivity(facebook, type = "localundirected", vids = 1)
+```
+
+
+### Question 2, 3 points
+
+Compare the degree, closeness and betweenness of Vertex 1 to the values of other nodes in the network. How will you evaluate the role of Vertex 1 in this network?
+
+**answer**
+
+The degree is the number of links (Indegree and Outdegree).
+Closeness is defined as the sum of geodesic distances so the shortest path to all other nodes in the network. 
+Betweenness is the number of times that a node is the bridge between other nodes and therefore lies along the shortest path between two other nodes.
+
+In order to answer this question we compared V1 with V2 in Douglas's network. 
+When comparing the closeness of V1 to V2 one can assume that v1 is a closer friend to Douglas as more common friends are shared. v1 has the highest number of links (degree) which means that v1 is very similarily connected like Douglas. v2 is not as well connected in Douglas's network which means that not as many friends are shared and that it might be a less close friend/person in real life. 
+
+
+### Question 3, 5 points
+
+In the lecture, we introduced a few measures of centrality: degree, betweenness, eigenvector. 
+Try to find top 5 nodes according to a) degree, b) betweenness, c) closeness and d) eigenvector. 
+And develop the scatter plot between different metrics, you can refer to the code below. 
+
+```{r}
+deg <- sort(degree(facebook, mode = "all"), decreasing = TRUE)[1:5]
+cls <- sort(closeness(facebook, normalized = TRUE), decreasing = TRUE)[1:5]
+btw <- sort(betweenness(facebook, directed = FALSE, normalized = TRUE),decreasing = TRUE)[1:5]
+# eig <- sort(eigen_centrality(facebook)['vector'], decreasing = TRUE)[1:5] 
+# eig is a list and not atomic element so sort() cannot sort it
+
+eig <- eigen_centrality(facebook)[1:5] 
+lcl <- sort(transitivity(facebook, type = "local") , decreasing = TRUE)[1:5]
+
+par(mfrow = c(2,2))
+plot(deg, cls, main = "Degree versus closeness", 
+     xlab = "Degree", ylab = "Closeness") 
+plot(deg, btw, main = "Degree versus betweenness",
+     xlab = "Degree", ylab = "Betweenness")
+plot(deg, eig$vector[1:5], main = "Degree versus eigenvector",
+     xlab = "Degree", ylab = "Eigenvector")
+plot(deg, lcl, main = "Degree versus local clustering",
+     xlab = "Degree", ylab = "Local clustering")
+
+```
+*Answer Question 3:*
+
+Discuss with your group and describe to your teacher, 
+  1) how well does the top 5 nodes by different metrics overlap with each other?
+  
+  **answer:** 
+
+The plot of degree versus closeness shows that the sum of the shortest path of the first five nodes and the degree show a slight positive correlation meaning that the number of common friends correlates with the closeness of the friends in the network. 
+
+The plot of degree versus betweenness plot shows that a node being the bridge between other nodes does not seem to have a strong connection with the number of friends in the network. However, two of the top 5 friends had the same metrics here and covered each other in the plot. Generally higher degrees showed a higher betweenness but it does not seem significant. 
+
+The plot of degree versus eigenvector shows that the eigenvector centrality depending on hoe central the neighbors of the node are and the degree (number of connections) partially overlap. However there is no actual trend or significance. One can tell that smaller values for Eigenvectors generally show less connections but with there is friends with apx. 1 friends and yet a higher value for eigenvector centrality (apx. 0.5) showing that they can still be well conncted by that metric even though they don't have as many degrees. 
+
+Even when looking at the previous plots of Douglas's network it is clear that there is overlapping social communities in the network.
+
+```{r}
+deg <- degree(facebook, mode = "all")
+cls <- closeness(facebook, normalized = TRUE)
+btw <- betweenness(facebook, directed = FALSE, normalized = TRUE)
+eig <- eigen_centrality(facebook)
+lcl <- transitivity(facebook, type = "local")
+
+par(mfrow = c(2,2))
+plot(deg[1:5], cls[1:5], main = "Degree versus closeness", 
+     xlab = "Degree", ylab = "Closeness") 
+plot(deg[1:5], btw[1:5], main = "Degree versus betweenness",
+     xlab = "Degree", ylab = "Betweenness")
+plot(deg[1:5], eig$vector[1:5], main = "Degree versus eigenvector",
+     xlab = "Degree", ylab = "Eigenvector")
+plot(deg[1:5], lcl[1:5], main = "Degree versus local clustering",
+     xlab = "Degree", ylab = "Local clustering")
+
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(deg, cls, main = "Degree versus closeness", 
+     xlab = "Degree", ylab = "Closeness") 
+plot(deg, btw, main = "Degree versus betweenness",
+     xlab = "Degree", ylab = "Betweenness")
+plot(deg, eig$vector, main = "Degree versus eigenvector",
+     xlab = "Degree", ylab = "Eigenvector")
+plot(deg, lcl, main = "Degree versus local clustering",
+     xlab = "Degree", ylab = "Local clustering")
+
+```
+*Answer Question 3 part B:*
+
+  2) why we need more than one metric to define centrality? 
+ 
+  **answer** We need different measures metrics to define centrality as there is multiple aspects that matter for it's definition.
+ 
+  Degree is the most obvious metrics of centrality, but it shouldn’t be the only one. Centralization defines how much the network revolves around a single node. It should taken in account the measured in eigen vector, closeness centrality, degree centrality and betweenness centrality in order to include not just the number of links and adjacent nodes but also the closeness to all other nodes including connections through other nodes (betweenness) and the how central the neighbors are. On the other hand, centralization: to which degree a network revolves around a single node.
+
+  
+
+# Measure group-level metrics
+
+```{r}
+deg_dist <- degree_distribution(facebook)
+barplot(deg_dist)
+edge_density(facebook)
+diameter(facebook, directed = FALSE)
+transitivity(facebook, type = "global")
+centr_degree(facebook)$centralization
+```
+
+
+### Question 4, 3 point 
+Discuss within your group on how you understand each of these measures. And describe to your teacher, 1) why diameter should be larger than 1, and other metrics such as edge density and transitivity are smaller than 1? 2) is this a tightly knitted network? 
+
+**answer 4**
+1) Diameter > 1 and edge,density and transitity <1
+1) The diameter is the shortest distance between the two most distant nodes in the network. The diameter should be larger than 1 because a diameter of one would only mean that there is one connections between two nodes which then of course would also be the shortest between them. A network with one degree can only be out of a maximum of 2 nodes.
+Edge density refers to the number of connections a participant has divided by all possible connections that participant could have.
+So v1 could potentially connect to all of Douglas's connections. A density of 100% or 1 is the greatest density in a system and would mean a connection to all other nodes. A density of 5% or 0.05 would for instance be a connection of 1/19 possible connections. This is why it's smaller than one or maximum 1.
+Transitivity is the probability of how close your friends are or knows each other, thats why it is impossible to me more than 1, because the maxium value is when everybody knows each other.
+
+2) A tightly knitted network ususally describes a group of people that is very close to each other or int his case friends that are close. As transivity has a value of 0.66 we assume that this is a close network as the diameter is 4 which means that the maximum distance between two nodes is 4 units apart. 7% for the edge density mean that the average person in Douglas's network has 6.5 average connections.
+
+# Detect the component and community
+
+### Question 5, 3 point
+
+Some of the group-level metrics provides us some estimations of the network structure.
+Although these quantitative measures are insightful, we might need to know more about
+the mesoscale structure of this network. For example, we already encountered problems in
+calculating the closeness centrality in the previous exercise. This is because this network has multiple components. From the basic plot of the network above, you can count the number of components manually. An easier way however, is to use the components
+function in R, that especially comes in handy when you are dealing with a larger network.
+
+```{r}
+components(facebook)
+```
+
+### Question 5.
+Reflect on what we have discussed about the Facebook network on Slide **47** of the lecture. Do you think this small network of Douglas resonates some general patterns of the entire Facebook network in terms of the components size and number? How can you explain such an observation [Question 5, 3 point].
+
+**answer 5**
+We assume that Douglas network has the same behaviour of facebook, looking at his results we have 10 clusters, with the 2 biggest corresponding to 72% of his friends.
+
+
+To better understand the components of this network, we can check the node attributes
+again. Check out the attributes table of variable “nodes”, where you can see that the 93
+friends of Douglas belong to 8 groups: BookClub, College, Family, GraduateSchool,
+HighSchool, Music, Spiel, Work. They explain the social context on why they are connected
+to Douglas.
+First thing we want to test here is whether or not that friends in the same components are those of the same group. This can be visualized by simply colouring the vertex according to their group.
+```{r}
+group <- as.factor(get.vertex.attribute(facebook_net, attrname = 'group'))
+pal <- brewer.pal(nlevels(group), "Set1")
+plot(facebook_net, vertex.col = pal[group], vertex.cex = 1.5,
+main = "Plot of Facebook Data colored by friend type")
+legend(x = "bottomleft", legend = levels(group), col = pal,
+pch = 19, pt.cex = 1.2, bty = "n", title = "Friend type")
+```
+
+
+### Question 6, 3 point
+
+Based upon the plot you produced, discuss with your group and describe to your teacher the distinctions of the components. Do you find instances of intermingling of Douglas friends (i.e., belong to different groups but end up in the same component)? Do you find any isolated groups here? What can you conclude about the mixing of Douglas' Facebook friends? 
+
+**Answer 6** 
+There is instances of intermingling within Douglas'network and his friends. As one can see there is groups like book club fully connect to a family member of Douglas. However, work is a cluster that does not mingle except for one node. Some groups like college friends are connected with each other but also have individual friends that are not connected to anybody else in Douglas's network. Overall one can say that there is some isolated groups in the Network and it's itneresting to see how well connected some friends are while still being completely secluded from other networks.
+
+```{r}
+group <- as.factor(get.vertex.attribute(facebook_net, attrname = 'sex'))
+pal <- brewer.pal(nlevels(group), "Set1")
+plot(facebook_net, vertex.col = pal[group], vertex.cex = 1.5,
+main = "Plot of Facebook Data colored by friend type")
+legend(x = "bottomleft", legend = levels(group), col = pal,
+pch = 19, pt.cex = 1.2, bty = "n", title = "Friend type")
+```
+```{r}
+group <- as.factor(get.vertex.attribute(facebook_net, attrname = 'relationship_status'))
+pal <- brewer.pal(nlevels(group), "Set1")
+plot(facebook_net, vertex.col = pal[group], vertex.cex = 1.5,
+main = "Plot of Facebook Data colored by friend type")
+legend(x = "bottomleft", legend = levels(group), col = pal,
+pch = 19, pt.cex = 1.2, bty = "n", title = "Friend type")
+```
+
+
+### Question 7, 3 point
+
+Using the above code as a reference, check out the attributes of other factors (e.g., sex, relationship_status) in terms of people in the same components. Note that you can specify the 'attrname' parameter within the function 'get.vertex.attribute'. Discuss with your group and describe to your teacher whether or not these factors are the keys in determining the formation of components
+
+**answer 7 **
+Looking the plots we assume they are not good key components to define components, because they are just attributes of a person. You dont chose a group because there is a man or woman, but because of similarities example your school group. The connections are not due to the attributes like gender or relationship status. The share of colors inside each component should be more homogenous, like when slip by groups, when one split by "sex" we have a very heterogenous definiton.
+
+
+
+
+Since we now see the groups of Douglas friends, we can also study the characteristics of
+these subgroups. Recall the fact that the density of this network is relatively low (0.08), but what about the densities of each of the subgroups.
+
+### Question 8, 3 point
+
+From this analysis, what do you observe from the density values? Are they similar across different groups? What is the minimum and maximum value you observed here and how do you explain that?
+
+*answer 8**
+
+
+```{r}
+sapply(levels(group), function(x) {
+  y <- get.inducedSubgraph(facebook_net, 
+                           which(facebook_net %v% "group" == x))
+  paste0("Density for ", x, " friends is ", 
+         edge_density(asIgraph(y)))
+})
+```
+
+
+### Question 9, 3 point
+
+So far, we analysed the subgroup structure only according to the original friend groups of Douglas. However, is this enough? Is the place where you know this person (e.g., workplace, book club) sufficient to explain the structure of your social network?
+
+To answer this question, search and discuss within your group on the theory of 'community detection'. Describe to your teacher what community detection is, and why it is useful to understand complex networks 
+
+
+```{r}
+
+```
+
+
+### Question 10, 2 point
+
+Compare the plots that you generate from the different algorithms; do you find them similar and why or why not? 
+
+```{r}
+cw <- cluster_walktrap(facebook)
+plot(cw, facebook, vertex.label = V(facebook)$group, 
+     main = "Walktrap")
+ceb <- cluster_edge_betweenness(facebook)
+plot(ceb, facebook, vertex.label = V(facebook)$group, 
+     main = "Edge Betweenness")
+cfg <- cluster_fast_greedy(facebook)
+plot(cfg, facebook, vertex.label = V(facebook)$group,
+     main = "Fast Greedy")
+clp <- cluster_label_prop(facebook)
+plot(clp, facebook, vertex.label = V(facebook)$group,
+     main = "Label Prop")
+cle <- cluster_leading_eigen(facebook)
+plot(cle, facebook, vertex.label = V(facebook)$group,
+     main = "Leading Eigen")
+```
+
+=======
+---
+title: "Group Lab assignment 2 - Social network analysis and modelling "
+author: "Hans, Jimmy, Lena and Gianis"
+mainfont: Arial
+fontsize: 12pt
+urlcolor: blue
+output:
+  html_document:
+    highlight: default
+    theme: paper
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
+    toc_depth: '5'
+params:
+  rcode: true
+  answers: true
+---
+
+
+## import packages
+```{r, echo=FALSE}
+library(igraph)
+library(network)
+library(intergraph)
+library(RColorBrewer)
+```
+
+# Exercise 1 Build and analyse a small network from Facebook
+
+```{r}
+nodes <- read.csv("Facebook_att.csv", header = TRUE)
+links <- read.csv("Facebook_edge.csv", header = TRUE)
+facebook <- graph_from_data_frame(d = links, vertices = nodes$NodeID, directed = FALSE)
+facebook_net <- asNetwork(facebook)
+
+```
+
+```{r}
+# Load in other attributes.
+facebook_net %v% "vertex.names"        <- nodes$vertex.names
+facebook_net %v% "sex"                 <- nodes$sex
+facebook_net %v% "friend_count"        <- nodes$friend_count
+facebook_net %v% "group"               <- nodes$group
+facebook_net %v% "mutual_friend_count" <- nodes$mutual_friend_count
+facebook_net %v% "na"                  <- nodes$na
+facebook_net %v% "relationship_status" <- nodes$relationship_status
+```
+
+
+```{r}
+summary(facebook_net)
+```
+
+
+```{r}
+plot(facebook_net, vertex.cex = 1.2, main = "Basic plot of Douglas’s Facebook friends")
+```
+
+### Question 1, 2 points
+
+Check out the Summary and Plot, how many friends do Douglas have on Facebook? Is this a directed or undirected graph and why? What is the meaning of the link between nodes in the plot? 
+
+**Answer**
+As one can see in the summary, Douglas has 93 friends on Facebook. THe graph shows undirected connections between the nodes as one only sees who is friends with who but not for instance if they are following each other in the network or if the attention/focus is directed in one direction. 
+The link in nodes means a friendship connection on facebook between the two nodes. 
+
+ mutual_friend_count:
+  integer valued attribute
+  93 values
+
+# Measure node-level metrics
+
+First we'll investiage on Dougla's friends on an individual level. Looking at friend number 1  (v=1) and that friends role in the network. 
+
+```{r}
+degree(facebook, v=1, mode = "total")
+plot(facebook_net, vertex.cex = 1.2, main = "Role of friend   v=1 in Douglas'network")
+closeness(facebook, v = 1, normalized = TRUE)
+betweenness(facebook, v = 1, directed = FALSE, normalized = TRUE) 
+eigen_centrality(facebook)$vector[1]
+transitivity(facebook, type = "localundirected", vids = 1)
+```
+Error message as some graphs are disconnected which means that closeness centrality cannot be calculated correctly as they cannot be reached from specific other nodes. 
+
+```{r}
+degree(facebook, v=2, mode = "total")
+plot(facebook_net, vertex.cex = 1.2, main = "Role of friend   v=2 in Douglas'network")
+closeness(facebook, v = 2, normalized = TRUE)
+betweenness(facebook, v = 2, directed = FALSE, normalized = TRUE) 
+eigen_centrality(facebook)$vector[2]
+transitivity(facebook, type = "localundirected", vids = 1)
+```
+
+
+### Question 2, 3 points
+
+Compare the degree, closeness and betweenness of Vertex 1 to the values of other nodes in the network. How will you evaluate the role of Vertex 1 in this network?
+
+**answer**
+
+The degree is the number of links (Indegree and Outdegree).
+Closeness is defined as the sum of geodesic distances so the shortest path to all other nodes in the network. 
+Betweenness is the number of times that a node is the bridge between other nodes and therefore lies along the shortest path between two other nodes.
+
+In order to answer this question we compared V1 with V2 in Douglas's network. 
+When comparing the closeness of V1 to V2 one can assume that v1 is a closer friend to Douglas as more common friends are shared. v1 has the highest number of links (degree) which means that v1 is very similarily connected like Douglas. v2 is not as well connected in Douglas's network which means that not as many friends are shared and that it might be a less close friend/person in real life. 
+
+
+### Question 3, 5 points
+
+In the lecture, we introduced a few measures of centrality: degree, betweenness, eigenvector. 
+Try to find top 5 nodes according to a) degree, b) betweenness, c) closeness and d) eigenvector. 
+And develop the scatter plot between different metrics, you can refer to the code below. 
+
+```{r}
+deg <- sort(degree(facebook, mode = "all"), decreasing = TRUE)[1:5]
+cls <- sort(closeness(facebook, normalized = TRUE), decreasing = TRUE)[1:5]
+btw <- sort(betweenness(facebook, directed = FALSE, normalized = TRUE),decreasing = TRUE)[1:5]
+# eig <- sort(eigen_centrality(facebook)['vector'], decreasing = TRUE)[1:5] 
+# eig is a list and not atomic element so sort() cannot sort it
+
+eig <- eigen_centrality(facebook)[1:5] 
+lcl <- sort(transitivity(facebook, type = "local") , decreasing = TRUE)[1:5]
+
+par(mfrow = c(2,2))
+plot(deg, cls, main = "Degree versus closeness", 
+     xlab = "Degree", ylab = "Closeness") 
+plot(deg, btw, main = "Degree versus betweenness",
+     xlab = "Degree", ylab = "Betweenness")
+plot(deg, eig$vector[1:5], main = "Degree versus eigenvector",
+     xlab = "Degree", ylab = "Eigenvector")
+plot(deg, lcl, main = "Degree versus local clustering",
+     xlab = "Degree", ylab = "Local clustering")
+
+```
+*Answer Question 3:*
+
+Discuss with your group and describe to your teacher, 
+  1) how well does the top 5 nodes by different metrics overlap with each other?
+  
+  **answer:** 
+
+The plot of degree versus closeness shows that the sum of the shortest path of the first five nodes and the degree show a slight positive correlation meaning that the number of common friends correlates with the closeness of the friends in the network. 
+
+The plot of degree versus betweenness plot shows that a node being the bridge between other nodes does not seem to have a strong connection with the number of friends in the network. However, two of the top 5 friends had the same metrics here and covered each other in the plot. Generally higher degrees showed a higher betweenness but it does not seem significant. 
+
+The plot of degree versus eigenvector shows that the eigenvector centrality depending on hoe central the neighbors of the node are and the degree (number of connections) partially overlap. However there is no actual trend or significance. One can tell that smaller values for Eigenvectors generally show less connections but with there is friends with apx. 1 friends and yet a higher value for eigenvector centrality (apx. 0.5) showing that they can still be well conncted by that metric even though they don't have as many degrees. 
+
+Even when looking at the previous plots of Douglas's network it is clear that there is overlapping social communities in the network.
+
+```{r}
+deg <- degree(facebook, mode = "all")
+cls <- closeness(facebook, normalized = TRUE)
+btw <- betweenness(facebook, directed = FALSE, normalized = TRUE)
+eig <- eigen_centrality(facebook)
+lcl <- transitivity(facebook, type = "local")
+
+par(mfrow = c(2,2))
+plot(deg[1:5], cls[1:5], main = "Degree versus closeness", 
+     xlab = "Degree", ylab = "Closeness") 
+plot(deg[1:5], btw[1:5], main = "Degree versus betweenness",
+     xlab = "Degree", ylab = "Betweenness")
+plot(deg[1:5], eig$vector[1:5], main = "Degree versus eigenvector",
+     xlab = "Degree", ylab = "Eigenvector")
+plot(deg[1:5], lcl[1:5], main = "Degree versus local clustering",
+     xlab = "Degree", ylab = "Local clustering")
+
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(deg, cls, main = "Degree versus closeness", 
+     xlab = "Degree", ylab = "Closeness") 
+plot(deg, btw, main = "Degree versus betweenness",
+     xlab = "Degree", ylab = "Betweenness")
+plot(deg, eig$vector, main = "Degree versus eigenvector",
+     xlab = "Degree", ylab = "Eigenvector")
+plot(deg, lcl, main = "Degree versus local clustering",
+     xlab = "Degree", ylab = "Local clustering")
+
+```
+*Answer Question 3 part B:*
+
+  2) why we need more than one metric to define centrality? 
+ 
+  **answer** We need different measures metrics to define centrality as there is multiple aspects that matter for it's definition.
+ 
+  Degree is the most obvious metrics of centrality, but it shouldn’t be the only one. Centralization defines how much the network revolves around a single node. It should taken in account the measured in eigen vector, closeness centrality, degree centrality and betweenness centrality in order to include not just the number of links and adjacent nodes but also the closeness to all other nodes including connections through other nodes (betweenness) and the how central the neighbors are. On the other hand, centralization: to which degree a network revolves around a single node.
+
+  
+
+# Measure group-level metrics
+
+```{r}
+deg_dist <- degree_distribution(facebook)
+barplot(deg_dist)
+edge_density(facebook)
+diameter(facebook, directed = FALSE)
+transitivity(facebook, type = "global")
+centr_degree(facebook)$centralization
+```
+
+
+### Question 4, 3 point 
+Discuss within your group on how you understand each of these measures. And describe to your teacher, 1) why diameter should be larger than 1, and other metrics such as edge density and transitivity are smaller than 1? 2) is this a tightly knitted network? 
+
+**answer 4**
+1) Diameter > 1 and edge,density and transitity <1
+1) The diameter is the shortest distance between the two most distant nodes in the network. The diameter should be larger than 1 because a diameter of one would only mean that there is one connections between two nodes which then of course would also be the shortest between them. A network with one degree can only be out of a maximum of 2 nodes.
+Edge density refers to the number of connections a participant has divided by all possible connections that participant could have.
+So v1 could potentially connect to all of Douglas's connections. A density of 100% or 1 is the greatest density in a system and would mean a connection to all other nodes. A density of 5% or 0.05 would for instance be a connection of 1/19 possible connections. This is why it's smaller than one or maximum 1.
+Transitivity is the probability of how close your friends are or knows each other, thats why it is impossible to me more than 1, because the maxium value is when everybody knows each other.
+
+2) A tightly knitted network ususally describes a group of people that is very close to each other or int his case friends that are close. As transivity has a value of 0.66 we assume that this is a close network as the diameter is 4 which means that the maximum distance between two nodes is 4 units apart. 7% for the edge density mean that the average person in Douglas's network has 6.5 average connections.
+
+# Detect the component and community
+
+### Question 5, 3 point
+
+Some of the group-level metrics provides us some estimations of the network structure.
+Although these quantitative measures are insightful, we might need to know more about
+the mesoscale structure of this network. For example, we already encountered problems in
+calculating the closeness centrality in the previous exercise. This is because this network has multiple components. From the basic plot of the network above, you can count the number of components manually. An easier way however, is to use the components
+function in R, that especially comes in handy when you are dealing with a larger network.
+
+```{r}
+components(facebook)
+```
+
+### Question 5.
+Reflect on what we have discussed about the Facebook network on Slide **47** of the lecture. Do you think this small network of Douglas resonates some general patterns of the entire Facebook network in terms of the components size and number? How can you explain such an observation [Question 5, 3 point].
+
+**answer 5**
+We assume that Douglas network has the same behaviour of facebook, looking at his results we have 10 clusters, with the 2 biggest corresponding to 72% of his friends.
+
+
+To better understand the components of this network, we can check the node attributes
+again. Check out the attributes table of variable “nodes”, where you can see that the 93
+friends of Douglas belong to 8 groups: BookClub, College, Family, GraduateSchool,
+HighSchool, Music, Spiel, Work. They explain the social context on why they are connected
+to Douglas.
+First thing we want to test here is whether or not that friends in the same components are those of the same group. This can be visualized by simply colouring the vertex according to their group.
+```{r}
+group <- as.factor(get.vertex.attribute(facebook_net, attrname = 'group'))
+pal <- brewer.pal(nlevels(group), "Set1")
+plot(facebook_net, vertex.col = pal[group], vertex.cex = 1.5,
+main = "Plot of Facebook Data colored by friend type")
+legend(x = "bottomleft", legend = levels(group), col = pal,
+pch = 19, pt.cex = 1.2, bty = "n", title = "Friend type")
+```
+
+
+### Question 6, 3 point
+
+Based upon the plot you produced, discuss with your group and describe to your teacher the distinctions of the components. Do you find instances of intermingling of Douglas friends (i.e., belong to different groups but end up in the same component)? Do you find any isolated groups here? What can you conclude about the mixing of Douglas' Facebook friends? 
+
+**Answer 6** 
+There is instances of intermingling within Douglas'network and his friends. As one can see there is groups like book club fully connect to a family member of Douglas. However, work is a cluster that does not mingle except for one node. Some groups like college friends are connected with each other but also have individual friends that are not connected to anybody else in Douglas's network. Overall one can say that there is some isolated groups in the Network and it's itneresting to see how well connected some friends are while still being completely secluded from other networks.
+
+```{r}
+group <- as.factor(get.vertex.attribute(facebook_net, attrname = 'sex'))
+pal <- brewer.pal(nlevels(group), "Set1")
+plot(facebook_net, vertex.col = pal[group], vertex.cex = 1.5,
+main = "Plot of Facebook Data colored by friend type")
+legend(x = "bottomleft", legend = levels(group), col = pal,
+pch = 19, pt.cex = 1.2, bty = "n", title = "Friend type")
+```
+```{r}
+group <- as.factor(get.vertex.attribute(facebook_net, attrname = 'relationship_status'))
+pal <- brewer.pal(nlevels(group), "Set1")
+plot(facebook_net, vertex.col = pal[group], vertex.cex = 1.5,
+main = "Plot of Facebook Data colored by friend type")
+legend(x = "bottomleft", legend = levels(group), col = pal,
+pch = 19, pt.cex = 1.2, bty = "n", title = "Friend type")
+```
+
+
+### Question 7, 3 point
+
+Using the above code as a reference, check out the attributes of other factors (e.g., sex, relationship_status) in terms of people in the same components. Note that you can specify the 'attrname' parameter within the function 'get.vertex.attribute'. Discuss with your group and describe to your teacher whether or not these factors are the keys in determining the formation of components
+
+**answer 7 **
+Looking the plots we assume they are not good key components to define components, because they are just attributes of a person. You dont chose a group because there is a man or woman, but because of similarities example your school group. The connections are not due to the attributes like gender or relationship status. The share of colors inside each component should be more homogenous, like when slip by groups, when one split by "sex" we have a very heterogenous definiton.
+
+
+
+
+Since we now see the groups of Douglas friends, we can also study the characteristics of
+these subgroups. Recall the fact that the density of this network is relatively low (0.08), but what about the densities of each of the subgroups.
+
+### Question 8, 3 point
+
+From this analysis, what do you observe from the density values? Are they similar across different groups? What is the minimum and maximum value you observed here and how do you explain that?
+
+*answer 8**
+Edge density refers to the number of connections a participant has divided by all possible connections that participant could have.
+
+
+
+The maximum value is 1 meaning that every node in the network is connected to all other nodes in the network like in the Bookclub or the Spiel Network.
+The smallest edge density was found in College friends with a value of 0.19.
+The values are therefore not similar across the different groups ant the connections vary a lot. Some groups seem to be very connected like the book club which could be due to it being a smaller group where all interact in real life due to the meetings to discuss a book while groups like the college friends obviously vary more over a large university/courses/friend groups etc.
+
+```{r}
+group <- as.factor(get.vertex.attribute(facebook_net, attrname = 'group'))
+pal <- brewer.pal(nlevels(group), "Set1")
+plot(facebook_net, vertex.col = pal[group], vertex.cex = 1.5,
+main = "Plot of Facebook Data colored by friend type")
+legend(x = "bottomleft", legend = levels(group), col = pal,
+pch = 19, pt.cex = 1.2, bty = "n", title = "Friend type")
+```
+
+```{r}
+sapply(levels(group), function(x) {
+y <- get.inducedSubgraph(facebook_net,
+which(facebook_net %v% "group" == x))
+paste0("Density for ", x, " friends is ",
+edge_density(asIgraph(y)))
+})
+```
+
+
+### Question 9, 3 point
+
+So far, we analysed the subgroup structure only according to the original friend groups of Douglas. However, is this enough? Is the place where you know this person (e.g., workplace, book club) sufficient to explain the structure of your social network?
+
+To answer this question, search and discuss within your group on the theory of 'community detection'. Describe to your teacher what community detection is, and why it is useful to understand complex networks 
+
+
+**Answer 9**: 
+Community detection can be used in machine learning to detect groups with similar properties and extract groups for various reasons. For example, this technique can be used to discover manipulative groups inside a social network or a stock market. A particular network might have multiple communities so multiple communities can overlap and a node is not just part of ONE community.
+So it might not be enoug to just look at the original friend group of Douglas as e.g. a high school friend can also be part of the movie group and therefore be part of multiple communities which makes the network way more complex.
+
+
+
+
+### Question 10, 2 point
+
+Compare the plots that you generate from the different algorithms; do you find them similar and why or why not? 
+
+**answer 10** 
+They seems similar, but they are not. The number of comunities is different, some algorithms has 12 another 14. The clustering of nodes is different, some algorithms cluster numbers (2,3,4) within a larges clusters and others just a separate cluster. Cluster and comunity is the same Kevin? Each algorithm has their own methods to find the comunities taking in account different methods.
+
+The plots are relatively similar to one another however they come to different amounts of clusters.
+As an axample the Label Prop for instance includes the relatively small group (2,3,4) in one larger cluster while Leading Eigen separates these completely.Fast Greedy and Edge betweenness group the network into different clusters as well. The edge betweenness excludes( 87, 82, 78,..) while Fast Greedy is includes these showing that they don't come to the same result in both the number of clusters and the amount if nodes included.
+
+
+
+```{r}
+cw <- cluster_walktrap(facebook)
+plot(cw, facebook, vertex.label = V(facebook)$group, 
+     main = "Walktrap")
+ceb <- cluster_edge_betweenness(facebook)
+plot(ceb, facebook, vertex.label = V(facebook)$group, 
+     main = "Edge Betweenness")
+cfg <- cluster_fast_greedy(facebook)
+plot(cfg, facebook, vertex.label = V(facebook)$group,
+     main = "Fast Greedy")
+clp <- cluster_label_prop(facebook)
+plot(clp, facebook, vertex.label = V(facebook)$group,
+     main = "Label Prop")
+cle <- cluster_leading_eigen(facebook)
+plot(cle, facebook, vertex.label = V(facebook)$group,
+     main = "Leading Eigen")
+```
+Further reading
+Do questions 11-12 (below) and show your teacher all of the results together. For
+questions where you generate a plot, table or code, you should copy this in your answer
+document (maybe using a screenshot).
+
+Read the following article:
+Ana Lucía Schmidt, Fabiana Zollo, Antonio Scala, Cornelia Betsch, Walter Quattrociocchi.
+Polarization of the vaccination debate on Facebook. Vaccine 36, 3606-3612, 2018.
+
+### Question 11
+Discuss with your group and describe to your teacher: What is the societal problem that the
+authors are studying here? How can this problem be addressed using social network
+analysis? [Question 11, 3 point].
+
+*answer 11*:
+
+People tend to prefer information that supports their beliefs over information that would work aganinst those set beliefs. This causes users online especially to select information adhering to their system of beliefs tending and ignore dissenting information which forms so-called echo chambers i.e., polarized groups of like-minded people who keep framing and reinforcing a shared narrative.
+
+This problem can be addressed by analyzing interaction in networks like facebook. In this paper multiple algorithms were uses on the bipatriate network that was represented in a transposed matrix which will have a row and column for each page, and the content of each cell representing
+the number of common users between 2 pages that were included (e.g. topic of the page focusing on vaccines).By doing this one can see how much users polarize within their groups reinforcing their beliefs. This showcases the phenomena of the chamber effect which makes it possible to find out how the network interacts for instance to opponent opinions.
+
+
+
+### Question 12
+Discuss with your group and describe to your teacher: How many communities did the authors detect and how did they do this? Additionally, reflect on which of the communities you expect has the highest density, and which of the communities do you think has the
+lowest density. [Question 12, 3 point].
+
+*answer 12*:
+The main communities identified consisted of two groups: 145 pro-vaccine with
+1,388,677 users and 98 anti-vaccine with 1,277,170 users. They were detected by using the Facebook Graph API and searching for specific keywords (vaccines, vaccinations, etc.) with at least 10 posts a date between 1st of January 2010 and 31st of May 2017) and the topic acutally being about vaccines and not just similar wordings. First, they classified by hand the groups, then they used algorithms and compare with original hand classifications (seems very similar results). Another surprensily thing is that people anti-vaccine has higher density (Pro-vaccine users interact with M = 1.42 pages (SD = 0.79), anti-vaccine users with 2.45 (SD = 2.13).). 
+
+
+# Exercise Two: Formulate a social network for certain architectures
+
+Exercise 1 illustrates the situation when we have complete information of the network, i.e.,
+we know who is connected to whom. In other cases, however, we might want to work on a
+synthetic network with special features.
+
+Do questions 13-16 (below) and show your teacher all of the results together. For
+questions where you generate a plot, table or code, you should copy this in your answer
+document (maybe using a screenshot).
+
+## Discuss with your group, then describe to your teacher, under which circumstances, we
+might need to work on a synthetic network. [Question 13, 2 point].
+
+**answer 13**
+Synthetic networks are useful to test methods that should be implemented in real world social networks. That way it is possible to rest new algorithms or solutions to study the effect on network typology in an experiment.
+Especially when it is more sensitive topics where lifes would be affected this makes it possible to analyze outcomes for instance in the spread of a disease depending on different social networks.
+
+
+Network relationships come in many shapes and sizes, and so there is no single model
+which encompasses them all. But over time, people do summarize some common paradigm
+that can be used to build a synthetic network. In the lecture, we mentioned three major
+architectures for synthetic network, which is Erdos-Renyi Random Graph Model, Smallworld
+Random Graph Model, and Barabasi-Albert (BA) model. All these models have builtin
+functions in R.
+
+Assuming you know how many nodes are in your network, as well as the probability that
+any two of them are connected (i.i.d and random), you can generate an E-R random graph
+using sample_gnp() or sample_gnm().
+
+In sample_gnp(n, p, directed = FALSE, loops = FALSE), the graph has ‘n’ vertices and for each
+edge the probability that it is present in the graph is ‘p’.
+
+In sample_gnm(n, m, directed = FALSE, loops = FALSE), the graph has ‘n’ vertices and ‘m’
+edges, and the ‘m’ edges are chosen uniformly randomly from the set of all possible edges.
+This set includes loop edges as well if the loops parameter is TRUE.
+Build an ER-random graph given the number of vertices and probability:
+
+```{r}
+ER <- sample_gnp(100, 1/100)
+plot(ER, vertex.label= NA, edge.arrow.size=0.02, vertex.size = 0.5, xlab = "ER
+Random Network: G(N,p) model")
+```
+```{r}
+ER <- sample_gnm(100, 2)
+plot(ER, vertex.label= NA, edge.arrow.size=0.02,vertex.size = 0.5, xlab = "ER
+Random Network: G(N,M) model")
+```
+
+## Plot your network (with n=100, and p=1/100) and compare with those with your group
+members. Are they identical? Explain why they are/aren’t [Question 14, 1 point].
+
+**answer 14**
+They are different plots but the same way to generate the plot, the p is the probability, but in the long run they will follow a binomial distribution.
+They are different as a random network chooses the first connections randomly.
+The number of all possible edges one can M = sigma(ni*pi) , for i in range k.
+So for a set of n and p do not uniquely determine the graph. We can have many different realizations given the same n and p values. One can expect a certain amount of connections but one cannot predict who know who etc.
+
+### Question 15:
+Develop three networks with the same number of vertices (n), but different probability (p);
+Name them as ER1, ER2, and ER3. Develop the plots of ER1, ER2 and ER3, describe how
+these three graphs look differently as p increase and explain why. [Question 15, 2 point].
+
+**answer 15**
+As we can see below, as p increase the graph seems more clustered/density.
+
+```{r}
+ER1 <- sample_gnp(100, 1/100)
+plot(ER1, vertex.label= NA, edge.arrow.size=0.02, vertex.size = 0.5, xlab = "ER
+Random Network: G(N,p) model , p = 1/100")
+
+
+ER2 <- sample_gnp(100, 10/100)
+plot(ER2, vertex.label= NA, edge.arrow.size=0.02, vertex.size = 0.5, xlab = "ER
+Random Network: G(N,p) model, p = 10/100")
+
+ER3 <- sample_gnp(100, 30/100)
+plot(ER3, vertex.label= NA, edge.arrow.size=0.02, vertex.size = 0.5, xlab = "ER
+Random Network: G(N,p) model, p = 30%")
+```
+
+
+### Question 16:
+If p<1, for n great enough, what happens to the clustering coefficient of an ER random
+graph and why? (You can use the ‘transitivity’ function to test your guess). Discuss with
+your group and describe the answer to your teacher. [Question 16, 2 point].
+
+**answer 16**
+• Clustering coefficient of a random graph is small
+• Bigger graphs with the same average degree k have lower clustering coefficient
+if the p< 1 with n going larger, the clustering coefficient will get lower, but the shortest path length will go into converge in the end. When n is increasing the transitivy is getting close to p.
+
+```{r}
+ER4 <- sample_gnp(100, 1/100)
+plot(ER4, vertex.label= NA, edge.arrow.size=0.02, vertex.size = 0.5, xlab = "ER
+Random Network: G(N,p) model, p = 1%")
+transitivity(ER4)
+```
+
+
+```{r}
+ER5 <- sample_gnp(1000, 1/100)
+plot(ER5, vertex.label= NA, edge.arrow.size=0.02, vertex.size = 0.5, xlab = "ER
+Random Network: G(N,p) model, p = 1%")
+transitivity(ER5)
+```
+
+We have 3 parameters. The number of the population (N), the number of close neighbors
+(k) and a rewiring probability p.
+Because this model generates some conglomerates of people knowing each other, it is
+really easy to be linked indirectly (and with a very few number of steps) with anyone in the
+map. This is why we call this kind of model a small world model. This is, in the three we
+describe here the closest from the realistic social network of friendship.
+The small-world model is built by introducing a rewiring probability to a regular network
+such as the regular lattice. Run the following code and see how the rewiring probability can
+change the network:
+
+```{r}
+Regular<-watts.strogatz.game(dim=1,size=300,nei=6, p=0)
+plot(Regular, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Ne
+twork with zero rewiring probability ")
+SW1<-watts.strogatz.game(dim=1,size=300,nei=6, p=0.001)
+plot(SW1, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Networ
+k with 0.001 rewiring probability ")
+SW2<-watts.strogatz.game(dim=1,size=300,nei=6, p=0.01)
+plot(SW2, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Networ
+k with 0.01 rewiring probability ")
+SW3<-watts.strogatz.game(dim=1,size=300,nei=6, p=0.1)
+plot(SW3, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Networ
+k with 0.1 rewiring probability ")
+```
+
+Do questions 17-20 (below) and show your teacher all of the results together. For
+questions where you generate a plot, table or code, you should copy this in your answer
+document (maybe using a screenshot).
+
+### Question 17:
+For rewiring probability p=0.001, develop the networks for n from 20 to 500 and record
+the diameter of each network; Plot N~log (diameter); what do you find and how will you
+explain that? [Question 17, 3 point].
+
+**answer 17** 
+The diameter increases, just with small increases with a larger number of neighboors. The relation is not linear!
+```{r}
+library(ggplot2)
+x = c()
+y = c()
+z = c()
+dat<-data.frame(matrix(ncol=3,nrow=100))
+for (i in c(0:100)){
+    SWX<-watts.strogatz.game(dim=1,size=50,nei=5, p=i/100)
+    # plot(SWX, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Networ
+    #k with 0.1 rewiring probability ")
+    #cat("p ", i/100)
+    #cat(" path ", mean_distance(SWX))
+    #cat("   cluster ", transitivity(SWX))
+    #cat("\n")
+    dat[(i),1]=i/100
+    dat[(i),2]=mean_distance(SWX)
+    dat[(i),3]=transitivity(SWX)
+    #x[i] = mean_distance(SWX)
+    #y[i] = transitivity(SWX)
+}
+colnames(dat)=c("pi","distance", "cluster")
+ggplot(dat)+geom_point(aes(x=dat[,"pi"],y=dat[,"distance"], color=dat[,"cluster"]))
+
+```
+
+
+
+```{r}
+library(ggplot2)
+dat<-data.frame(matrix(ncol=2,nrow=480))
+
+for (i in c(20:1000)){
+
+  dat[(i-19),1]=i
+
+  dat[(i-19),2]=diameter(watts.strogatz.game(dim=1,size=i,nei=6, p=0.001))
+
+}
+
+dat$X2=dat$X2
+
+colnames(dat)=c("N","Log_Diameter")
+
+ggplot(dat)+geom_point(aes(x=N,y=Log_Diameter))
+```
+
+
+### Question 18:
+Check the clustering coefficient and average path length of the Regular, SW1, SW2 and
+SW3. Describe the trend of clustering coefficient and average path length as p increase.
+Does any of these graphs show the desirable attributes that you are looking for a small
+world network? [Question 18, 3 point].
+**answer 18**:
+As p increase the average path lengh becomes smaller, the clustering coeffienct becomes smaller as well. We cannot see some properties of small random network because the number of neighboors and size of the network not clearly show the properties of a small random network (high clust and small path).
+
+With an increase in p, the clustering coefficient decreases.
+As one can see in the plots below, the increase in p results into plots with high clustering and short paths.
+This is similar to small world random graph model with high clustering and a small average shortest path length. Most models that we looked at here however were relatively large with a lot of neighbours. The short cuts in these plots however show a similarity to the small world model that connects all nodes with just few edges.
+
+```{r}
+size = 50
+neig = 6
+Regular<-watts.strogatz.game(dim=1,size=size,nei=neig, p=0)
+plot(Regular, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Ne
+twork with zero rewiring probability ")
+diameter(Regular) 
+average.path.length(Regular)
+transitivity(Regular) #clustering
+
+SW1<-watts.strogatz.game(dim=1,size=size,nei=neig, p=0.001)
+plot(SW1, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Networ
+k with 0.001 rewiring probability ")
+
+SW2<-watts.strogatz.game(dim=1,size=size,nei=neig, p=0.01)
+plot(SW2, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Networ
+k with 0.01 rewiring probability ")
+SW3<-watts.strogatz.game(dim=1,size=size,nei=neig, p=0.1)
+plot(SW3, layout=layout.circle, vertex.label=NA, vertex.size=5, main= "Networ
+k with 0.1 rewiring probability ")
+```
+
+### Question 19:
+For the same setting, i.e., size =300, nei=6, what are the range of p you will suggest to build
+a small network and why? One solution you can consider is to refer to the Figure 2 in Watts
+and Strogatz (1998), which explains the properties of small-world network for the family of
+randomly rewired graphs. Reproduce Figure 2 in the current context (i.e., size=300, nei=6).
+Discuss with your group and show the answer to your teacher. [Question 19, 5 point].
+
+**Answer 19**
+To modelling small random network we need to chose p from a range (2^-6 to 2^-4). Maintain high clustering and path lenght small.
+
+
+```{r}
+set.seed(1)
+avg.stat <- function(nei, p) {
+result <- replicate(1000, {
+wsg <- watts.strogatz.game(1, 300, nei, p)
+c(average.path.length(wsg),
+transitivity(wsg))
+})
+apply(result, 1, quantile, probs = c(0.5, 0.05, 0.95))
+}
+nei <- 6
+p <- 2^-seq(0, 10, len = 21)
+result <- sapply(p, avg.stat, nei = nei)
+result <- t(result / rep(avg.stat(nei, 0)[1,], each = 3))
+par(mar=c(3.2, 2, 0.2, 0.2), mgp=c(2, 1, 0))
+matplot(p, result, type = "l", log = "x", xaxt = "n", ylab = "",lty = rep(c(1,2,2),2), col=rep(c(1,2), each=3))
+axis(1, at = 2^- (0:10), labels = c(1, parse(text = paste(2, 1:10, sep ="^-",collapse = ";"))))
+legend("bottomleft", c("average path length", "clustering coefficient"),lty = 1, col = c(1, 2))
+```
+
+### Question 20:
+As a follow-up question of Q19, do you find the p values of very large or relatively small?
+What are its implications? [Question 20, 3 point].
+
+**Answer 20**
+Relativily large (they are moving from small to large), so the probablity is increasing. The range is from 0 to 1, so with a small variation of p will decrease the path legnth to a rate way more higher than for clustering coeffient
+
+
+The third architecture is to generate scale-free graphs according to the Barabasi-Albert
+model. This model is computing with a recursive algorithm. Two parameters are needed,
+the initial number of nodes (n0) and the total number of node (N). At the beginning, every
+initial node (the n0 first nodes) knows the other ones, then, we create, one by one the other
+node. At the creation of a new node, this node is linked randomly to an already existing
+node. The probability that the new node is linked to a certain node is proportional to the
+number of edges this node already has. In other word, the more links you have, the more
+likely new nodes will be link to you.
+
+This model is for any network respecting the idea of "rich get richer". The more friends one
+node has, the more likely the new nodes will be friend with him. This kind of model is
+relevant for internet network. For example, the more famous is the website, the more likely
+this website will be known by other websites.
+
+```{r}
+g0 <- barabasi.game(100, power = 1, m = NULL, out.dist = NULL, out.seq = NULL
+, out.pref = FALSE, zero.appeal = 1, directed = FALSE,algorithm ="psumtree",
+start.graph = NULL)
+plot(g0, vertex.label= NA, edge.arrow.size=0.02,vertex.size =5, main = "Scale
+-free network model, power=1")
+```
+
+
+Do questions 21-23 (below) and show your teacher all of the results together. For
+questions where you generate a plot, table or code, you should copy this in your answer
+document (maybe using a screenshot).
+
+### Question 21:
+What does the power in the above function mean? How can it govern the structure of the
+network (e.g., the formulation of hubs)? (Hint: Change the value of power from 0.05, 0.5, 1,
+1.5; See how the plot change; if you still fail to see the difference, visualize the vertex size
+according to the edge number, you can consider the code below.) [Question 21, 3 point].
+
+```{r}
+g0 <- barabasi.game(100, power = 0.05, m = NULL, out.dist = NULL, out.seq = NULL
+, out.pref = FALSE, zero.appeal = 1, directed = FALSE,algorithm ="psumtree",
+start.graph = NULL)
+plot(g0, vertex.label= NA, edge.arrow.size=0.02,vertex.size =5, main = "Scale
+-free network model, power=0.05")
+
+g1 <- barabasi.game(100, power = 0.5, m = NULL, out.dist = NULL, out.seq = NULL
+, out.pref = FALSE, zero.appeal = 1, directed = FALSE,algorithm ="psumtree",
+start.graph = NULL)
+plot(g1, vertex.label= NA, edge.arrow.size=0.02,vertex.size =5, main = "Scale
+-free network model, power=0.5")
+
+g2 <- barabasi.game(100, power = 1, m = NULL, out.dist = NULL, out.seq = NULL
+, out.pref = FALSE, zero.appeal = 1, directed = FALSE,algorithm ="psumtree",
+start.graph = NULL)
+plot(g2, vertex.label= NA, edge.arrow.size=0.02,vertex.size =5, main = "Scale
+-free network model, power=1")
+```
+
+
+**Answer 21**
+The power of the preferential attachment, the default is one, ie. linear preferential attachment. So with power = 1 they are most likely to be attach to the nodes with higher degree, with low power they tend to be attached to the higher degree node, but with "least preferences". In other words, the preferential attachment process generates a "long-tailed" distribution following a Pareto distribution or power law in its tail.
+
+```{r}
+g1 <- barabasi.game(100, power = 0.5, m = NULL, out.dist = NULL, out.seq = NULL, out.pref = FALSE, zero.appeal = 1, directed = FALSE,algorithm ="psumtree"
+, start.graph = NULL)
+g1Net<-asNetwork(g1)
+VS = 3+ 0.5*degree(g1)
+plot(g1, vertex.label= NA, edge.arrow.size=0.02,vertex.size =VS, main = "Scal
+e-free network model, power=0.5")
+```
+
+### Question 22
+Discuss with your groups, if you are maintaining a network with a power of 0.5 and 1.5,
+respectively, what will be your plans to build up resilience for random and targeted attack?
+[Question 22, 3 point].
+
+**Answer 22**
+For a random attack it's hard to know which node in the network will be targeted. However, the larger the power the more dangerous are attacks hitting the major node in the network will most connections. A smaller power is therefore more resilient to targeted attacks. A way to build up resilience would be more edges (more connections) within the network to keep it connected. However, this is very costly.
+
+```{r}
+g1 <- barabasi.game(100, power = 0.5, m = NULL, out.dist = NULL, out.seq = NULL, out.pref = FALSE, zero.appeal = 1, directed = FALSE,algorithm ="psumtree"
+, start.graph = NULL)
+g1Net<-asNetwork(g1)
+VS = 3+ 0.5*degree(g1)
+plot(g1, vertex.label= NA, edge.arrow.size=0.02,vertex.size =VS, main = "Scal
+e-free network model, power=0.5")
+
+g2 <- barabasi.game(100, power = 1.5, m = NULL, out.dist = NULL, out.seq = NULL, out.pref = FALSE, zero.appeal = 1, directed = FALSE,algorithm ="psumtree"
+, start.graph = NULL)
+g1Net<-asNetwork(g2)
+VS = 3+ 1.5*degree(g2)
+plot(g1, vertex.label= NA, edge.arrow.size=0.02,vertex.size =VS, main = "Scal
+e-free network model, power=1.5")
+```
+
+The above theoretical models on network architectures are based upon assumptions on the
+clustering coefficient, path length and degree distribution. It is interesting to check how
+true these assumptions are comparing the social networks in the real world. Next, you will
+investigate the structure of a few real-world networks. We will use four datasets from
+Stanford Network Analysis Project (SNAP).
+
+The datasets we use are the “Amazon product co-purchasing network and ground-truth
+communities”, “localation-based social network Brightkite”, Collaboration network of General
+Relativity and Quantum Cosmology. Check the above links to have an idea what these
+networks are, what kind of human interactions are involved.
+
+### Question 23:
+Download the rds data of these network from the BB, import the data to R and build the
+network. Check out their network attributes. Do you find these real networks show some
+attributes of the synthetic architectures we studied above (e.g., random ER graph, smallworld,
+and scale-free network)? Show your teachers some numbers, plots and how you
+interpret the results. [Question 23, 6 point].
+(Note: you will find that path length is computationally intensive as there are many nodes
+in the network. Luckily, the website of the data has provided that the diameter of the
+Amazon network is 44, Brightkite’s is 16, and the Collaboration network’s is 17. While not
+the same as the average shortest path, the diameters give some information about the
+connectedness of the network.)
+
+**answer 23** 
+We can se bellow with the plots and results, that: The rds dataset (brightkite) shows:
+degree: 17
+showing the number of connected nodes
+Closeness: 0.02249179
+showing us the sum of the length of the shortest path - a density measure that seems rather small here
+Betweenness centrality: 0.00124
+Betweenness is the number of times that a node is the bridge between other nodes and therefore lies along the shortest path between two other nodes.
+Clustering: 0.6649123
+A clustering value of 0.8 is definitely high especially compared to what we have seen so far.
+Path/avg. distance: 2.08
+An average path distance of 2 nodes seems rather short which matches with the high clustering value.
+
+So in this network we can see high clustering while as one would see in a synthetic network or small world model/ In the plot one can also see that there is quite some clustering going on while the diameter appears to be rather small. While the diameter is 4 the average distance is 2 - both showing that they the network is not wide? large? spread out? which is similar to a small world model.
+
+Amazon:
+The cluster is low while the diameter/distance is high. Diameter increases with the size of the network which is why we assume a random network due to low clustering. 
+
+Collab:
+The cluster is high while the diameter/distance is low Diameter increases with the size of the network which is why we assume a small world, similar as brighkite!
+
+
+
+```{r}
+#load BrighKite
+nodes <- readRDS("brightkite_edge.rds")
+
+brightkite <- graph_from_data_frame(nodes, directed = FALSE)
+brightkite_net <- asNetwork(brightkite)
+brightkite_net
+
+#summary(brightkite_net)
+```
+
+
+```{r}
+print("Degree")
+degree(brightkite, v=1, mode = "total")
+#plot(brightkite, vertex.cex = 1.2, main = "BridgtKite")
+print("Closeness")
+closeness(brightkite, v = 1, normalized = TRUE)
+
+#print("Betweeness")
+#betweenness(brightkite, v = 1, directed = FALSE, normalized = TRUE) 
+#eigen_centrality(facebook)$vector[1]
+print("Clustering")
+transitivity(brightkite, vids = 1)
+print("Avg Distance")
+average.path.length(brightkite)
+print("Diameter")
+diameter(brightkite)
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+#load Amazon
+nodes <- readRDS("collab_edge.rds")
+collab <- graph_from_data_frame(nodes, directed = FALSE)
+collab_net <- asNetwork(collab)
+collab_net
+
+print("Degree")
+degree(collab, v=1, mode = "total")
+#plot(brightkite, vertex.cex = 1.2, main = "BridgtKite")
+print("Closeness")
+closeness(collab, v = 1, normalized = TRUE)
+
+#print("Betweeness")
+#betweenness(amazon, v = 1, directed = FALSE, normalized = TRUE) 
+#eigen_centrality(facebook)$vector[1]
+print("Clustering")
+transitivity(collab, vids = 1)
+#print("Avg Distance")
+#average.path.length(amazon)
+#print("Diameter")
+#diameter(amazon)
+```
+
+# Exercise 3: Build the social network of this class and simulate the contagion process
+
+This exercise will build a social network of this class then simulate how contagion can
+spread through the network. We will show you the complete work flow from collecting
+network data, processing, building contagion model and suggestions based upon model
+results.
+Before this tutorial, we have designed a small survey to collect the network data and
+parameters that we need to model contagion. You can check out the survey via
+https://forms.office.com/Pages/ResponsePage.aspx?id=oFgn10akD06gqkv5WkoQ52b4ptiQO
+5JFic6iamiXpGJUMzRFTUNCVlhDUFg0VEg4STE2TDFMSzVDMi4u
+The first question is to deal with the data privacy and consensus from interviewee, which
+data scientists should always bear in mind nowadays. Under General Data Protection
+Regulation (GDPR), we need to follow a strict protocol in collecting and analyzing any
+personal data. Standard procedures include but not limited to acknowledgement on how
+the data will be used, asking for consensus, anonymized the data as soon as possible to
+eliminate any chance of re-identification. This is also true when you are trying to collect
+and analyse online data from Facebook, Twitter and others social medias. There is an
+interesting reading of “But the data is already public”: on the ethics of research in Facebook.
+It is based on a controversial case that IDs of the Facebook friendship data in one research
+were reidentified only 7 days after the dataset was made public.
+The second and third questions are on network data, which we ask names of people that
+you know/ talk frequently in this class. These are quite traditional ways to collect network
+data, but not necessarily good and feasible ones. This is because such questions ask for too
+much personal details such as names. And it will become cumbersome when one has too
+many friends to name. Indeed, we received a few responses saying that “too many”! (Looks
+like some of your classmates are very well connected!) . Other alternatives include asking
+only the size of network (e.g., how many friends you have), or providing a map of house
+numbers for neighbors to point out whom they know.
+
+Do questions 24-26 (below) and show your teacher all of the results together. For
+questions where you generate a plot, table or code, you should copy this in your answer
+document (maybe using a screenshot).
+
+# Question 24:
+The fourth and fifth questions are designed to collect the parameters that we will need to
+build 1) an independent cascade (IC) model and 2) a threshold model. Can you see which
+question is for the IC model and which one is for the threshold model? [Question 24, 1
+point].
+**Answer**: 
+Question 4 is related to indenpendt cascade model, because is asking about how many friends, so is the degree of network.
+Question 5 is relatate to threshold model, because it means about likelyhood.
+
+# Question 25:
+Download the file “Class network survey.xlsx” from BB, check out the response of Q4 and
+Q5. Among the three types of behaviors, which one is the least contagious? Which one is the
+most contagious? And why? [Question 25, 2 point].
+**Answer**
+To answer that we average the values of each column, so this is the contagious gonna be based on that values: higer = higher contagious. So vegetarian recipe is the least contigous and paper relate to lecture is the higher contagious.
+
+# Question 26:
+In social network science, we sometimes see the emergence of behavior as a product of
+network structure. To the context of this small survey, it would mean that your likelihood
+to share or your threshold to be influenced by others is relevant to your position in this
+network. For example, someone at the central position at this network might be more
+open-minded to accept new changes. If you want to draw robust conclusion, you should
+first build the network, analyse the node-level attributes in terms of different centralities
+and see if there is a correlation between the node-level attributes and their response. For
+simple illustration here, you can just check the degree of this network, i.e., the number of
+friends and close friends and their response to Q4 and Q5 in “Class network survey.xlsx”.
+Do you think network size can explain the differences in their likelihood to share and their
+thresholds to adopt? And why their answers are dependent/ independent on network size
+here? [Question 26, 2 point].
+
+```{r}
+
+nodes <- read.csv("Class network survey.csv")
+class <- graph_from_data_frame(nodes, directed = FALSE)
+class_net <- asNetwork(class)
+class_net
+```
+```{r}
+plot(class_net)
+
+```
+
+```{r}
+degree(class)
+#vertices(class)
+#transitivity(class) #cluster
+#betweenness(class)
+closeness(class, v = 1, normalized = TRUE)
+betweenness(class, normalized = TRUE) 
+eigen_centrality(class)$vector[1]
+transitivity(class, vids = 1)
+```
+**Answer 26** 
+The network size is define by number of nodes, not by number of direct neighboors. So the size donset matter to probablity to share or try, it depends the number of close friends you have. 
+
+
+We then build a synthetic network of 100 people respecting the distribution of degree,
+likelihood to share, and threshold to adopt that we drew from the 24 samples. Please
+download the network data from BB, build the network and import the attributes of nodes.
+
+```{r}
+library(tidyr)
+nodes <- readRDS("class_nei.rds")
+vertices <- readRDS("Attributes.rds")
+g <- nodes %>%
+  rename("ID" = matrix..) %>%
+  pivot_longer(cols = starts_with("V")) %>%
+  filter(!is.na(value)) %>%
+  dplyr::select(ID, value) %>%
+  graph_from_data_frame(vertices = vertices)
+
+x <- nodes %>%
+  rename("ID" = matrix..) %>%
+  pivot_longer(cols = starts_with("V")) %>%
+  filter(!is.na(value)) %>%
+  dplyr::select(ID, value) 
+```
+
+```{r}
+plot(g)
+```
+
+Imagine you are a group of data scientists that are interested in robustness of this network.
+You want to study the optimal percolation problem, e.g., to find a minimal set of nodes
+which if removed would break down the network into many disconnected pieces. In the
+context of influence maximization problem, your objective function f(s) will be the size of
+largest component in the network after the removal of s (s is a set of nodes).
+
+Do questions 27-30 (below) and show your teacher all of the results together. For
+questions where you generate a plot, table or code, you should copy this in your answer
+document (maybe using a screenshot).
+
+### Question 27
+Before any removal of nodes, this class network is a connected graph with only one
+component. The size of largest component is therefore 100. Find a single node (n=1) that
+after removal, will lead to the greatest decrease in the size of the largest component. Show
+your teacher the ID of node and describe your observations. [Question 27, 3 point].
+
+```{r}
+degree <- degree(g)
+#degree
+
+order(degree, decreasing = TRUE)
+#degree[68]
+list_indexes <- c()
+
+for (i in list(1:100) ){
+  value <- order(degree, decreasing = TRUE)
+  list_indexes[i] = degree[value]
+  #degree[value] <- NULL
+}
+list_indexes
+degree[68]
+```
+
+
+### Question 28
+To answer the above question, you might search explicitly to remove the 100 nodes one by
+one from the network. But can you apply such explicit search if you try to find out a set of
+nodes (i.e., n>1) that will lead to the greatest decrease? [Question 28, 2 point].
+** ANswer 28**
+It will lead only to 67% of the optimal algorithm, so we can use it, but not in the optimal way.
+
+
+###Question 29
+In the lecture, we mentioned two board categories of approximation algorithms. One is by
+heuristics such as degree, closeness, betweenness and eigenvector. The other is by greedy
+algorithm. Using 1) degree heuristics 2) betweenness heuristics and 3) greedy algorithms,
+find out a set of 5 nodes that should be removed to produce the greatest decline in
+component size. Compare the solutions provided by different algorithms. Do you find
+significant differences between the efficiencies of these algorithms and why? [Question 29,
+5 point].
+**Answer 29**
+
+```{r}
+library(tidyr)
+nodes <- readRDS("class_nei.rds")
+vertices <- readRDS("Attributes.rds")
+col <- list(1:5)
+i = 1
+
+while (i < 6) {
+  
+  x <- nodes %>%
+    
+    rename("ID" = matrix..) %>%
+    pivot_longer(cols = starts_with("V")) %>%
+    filter(!is.na(value)) %>%
+    dplyr::select(ID, value) %>%
+    graph_from_data_frame(vertices = vertices)
+    #index
+  value <- order(degree(x), decreasing = TRUE)[1]
+  
+  #THIS IS WRONG!    
+  nodes <-  nodes[!value, ]
+  vertices <-  vertices[!value,]
+  #THIS IS WRONG!
+  
+  cat("test", i)  
+  cat("index", value)
+  i <-  i + 1
+}
+```
+
+### Question 30:
+Try to find out the percentage of nodes that you should take out from the network that, by
+doing so, the size of the largest component will decrease dramatically. You should compare
+the percentages you find according to the greedy algorithms, degree heuristic and
+betweenness heuristics. Describe the answer to your teacher with the supported plots.
+What’s the potential implication if you consider vaccination strategy for this small
+community? [Question 30, 5 point].
+(Hints: you should develop a plot where the x-axis is the percentage of nodes that you take
+out (q), and y-axis is the size of the largest component after you take out q (G(q)).)
+
+
+>>>>>>> Stashed changes
